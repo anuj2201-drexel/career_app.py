@@ -1,6 +1,5 @@
 import streamlit as st
-import googletrans
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 
 # ------------------ Initial Setup ------------------ #
 st.set_page_config(page_title="Career Mitra AI", layout="wide")
@@ -32,7 +31,7 @@ language_code = languages[selected_lang]
 
 def t(text):
     try:
-        return translator.translate(text, dest=language_code).text
+        return GoogleTranslator(source='auto', target=language_code).translate(text)
     except:
         return text
 
