@@ -1,198 +1,120 @@
+
 import streamlit as st
 from deep_translator import GoogleTranslator
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import json
 
-# ------------------ Initial Setup ------------------ #
-st.set_page_config(page_title="Career Counsellor AI", layout="wide")
-st.title("🎓 Career Counsellor AI (India Specific)")
+# Load pre-written FAQ if needed
+with open("career_faq.json", "r", encoding="utf-8") as f:
+    career_faq = json.load(f)
 
-st.markdown("""
-This tool analyses a student's career preferences, dislikes, subjects, and hobbies to recommend suitable career domains and job roles. Built for Indian students across streams (Science, Commerce, Humanities).
-""")
+st.set_page_config(page_title="Career Discovery App", layout="wide")
+st.title("🎓 Career Discovery Companion")
+st.markdown("This AI-driven tool helps you find the best career options based on your interests, hobbies, and achievements.")
 
-# ------------------ Language Selection ------------------ #
+# Language support
 languages = {
-    "English": "en",
-    "Hindi": "hi",
-    "Marathi": "mr",
-    "Gujarati": "gu",
-    "Bengali": "bn",
-    "Tamil": "ta",
-    "Telugu": "te",
-    "Kannada": "kn",
-    "Malayalam": "ml",
-    "Punjabi": "pa"
+    "English": "en", "Hindi": "hi", "Marathi": "mr", "Gujarati": "gu",
+    "Tamil": "ta", "Telugu": "te", "Kannada": "kn", "Bengali": "bn",
+    "Punjabi": "pa", "Malayalam": "ml"
 }
+selected_language = st.selectbox("Select your language", list(languages.keys()))
+lang_code = languages[selected_language]
 
-selected_lang = st.selectbox("Choose your language (अपनी भाषा चुनें)", list(languages.keys()))
-language_code = languages[selected_lang]
-
-# Helper to translate prompts
-def t(text):
+def translate_text(text, target_lang):
     try:
-        return GoogleTranslator(source='auto', target=language_code).translate(text)
+        return GoogleTranslator(source='auto', target=target_lang).translate(text)
     except:
         return text
 
-# ------------------ Input Form ------------------ #
-if 'step' not in st.session_state:
-    st.session_state.step = 0
-
-if 'user_data' not in st.session_state:
-    st.session_state.user_data = {}
-
-if 'final_go' not in st.session_state:
-    st.session_state.final_go = []
-
-if 'final_no_go' not in st.session_state:
-    st.session_state.final_no_go = []
-
-if 'suggestions' not in st.session_state:
-    st.session_state.suggestions = []
-
-if 'follow_ups' not in st.session_state:
-    st.session_state.follow_ups = {}
-
-category_domain_map = {
-    "doctor": ["Medicine & Healthcare"],
-    "biology": ["Medicine & Healthcare", "Environmental & Biological Science"],
-    "psychology": ["Community & Social Service", "Social Science"],
-    "engineer": ["Engineering & Technology"],
-    "coding": ["Information Technology"],
-    "computer": ["Information Technology"],
-    "law": ["Law Enforcement & Protective Service"],
-    "teaching": ["Education, Training & Library"],
-    "drawing": ["Arts, Design, Media & Communication"],
-    "accounting": ["Business, Accounts & Finance"],
-    "math": ["Engineering & Technology", "Information Technology"],
-    "history": ["Social Science"],
-    "football": ["Personal Care & Service"],
-    "ias": ["Law Enforcement & Protective Service", "Management"],
-    "design": ["Arts, Design, Media & Communication"],
-    "commerce": ["Business, Accounts & Finance"],
-    "physics": ["Physical Science"],
-    "chemistry": ["Physical Science"],
-    "environment": ["Environmental & Biological Science"],
-    "media": ["Arts, Design, Media & Communication"],
-    "training": ["Education, Training & Library"],
-    "leadership": ["Management"],
-    "people": ["Community & Social Service", "Sales"],
-    "machines": ["Installation, Maintenance & Repair"],
-    "data": ["Business, Accounts & Finance", "Information Technology"]
-}
-
+# Career domains
 career_domains = [
     "Medicine & Healthcare", "Engineering & Technology", "Installation, Maintenance & Repair",
     "Information Technology", "Environmental & Biological Science", "Physical Science",
-    "Transportation & Material Moving", "Business, Accounts & Finance", "Management",
-    "Sales", "Arts, Design, Media & Communication", "Education, Training & Library",
-    "Community & Social Service", "Social Science", "Office Support & Administration",
-    "Personal Care & Service", "Law Enforcement & Protective Service"
+    "Transportation & Material Moving", "Business, Accounts & Finance", "Management", "Sales",
+    "Arts, Design, Media & Communication", "Education, Training & Library", "Community & Social Service",
+    "Social Science", "Office Support & Administration", "Personal Care & Service",
+    "Law Enforcement & Protective Service"
 ]
 
-def extract_domains(text):
-    text = text.lower()
-    domains = set()
-    for keyword, domain_list in category_domain_map.items():
-        if keyword in text:
-            domains.update(domain_list)
-    return domains
+# NLP Keyword dictionary per domain
+domain_keywords = {
+    "Information Technology": ["coding", "programming", "software", "developer", "AI", "data", "computers"],
+    "Medicine & Healthcare": ["doctor", "nurse", "medicine", "surgery", "hospital", "patient", "health"],
+    "Engineering & Technology": ["machines", "engineering", "mechanical", "civil", "electrical", "robotics"],
+    "Business, Accounts & Finance": ["money", "finance", "bank", "investment", "CA", "accountant", "stocks"],
+    "Arts, Design, Media & Communication": ["drawing", "painting", "acting", "writing", "media", "film", "design"],
+    "Education, Training & Library": ["teaching", "training", "education", "library", "students", "coach"],
+    "Social Science": ["psychology", "history", "geography", "politics", "economics"],
+    "Law Enforcement & Protective Service": ["police", "law", "army", "defence", "security"],
+    "Personal Care & Service": ["beautician", "hair", "salon", "spa", "styling", "cooking"],
+}
 
-# ------------------ Sentence-Level Matching ------------------ #
-def interpret_sentences(user_input):
-    input_text = user_input.lower()
-    matched = set()
-    for keyword in category_domain_map:
-        if keyword in input_text:
-            matched.update(category_domain_map[keyword])
-    return matched
+# Collect inputs
+inputs = {}
+inputs["career_like"] = st.text_area(translate_text("Which careers do you like?", lang_code))
+inputs["career_dislike"] = st.text_area(translate_text("Which careers do you dislike?", lang_code))
+inputs["subjects_like"] = st.text_area(translate_text("Which subjects do you enjoy in school?", lang_code))
+inputs["subjects_dislike"] = st.text_area(translate_text("Which subjects do you dislike?", lang_code))
+inputs["hobbies"] = st.text_area(translate_text("List your hobbies and any personal achievements", lang_code))
 
-def ask_follow_up():
-    st.session_state.follow_ups['q4'] = st.selectbox(t("4️⃣ Which of these activities do you enjoy most?"), [
-        t("Helping people"),
-        t("Fixing or building things"),
-        t("Solving puzzles or logical problems"),
-        t("Being on stage or drawing/creating"),
-        t("Learning about business or money")
-    ])
-    st.session_state.follow_ups['q5'] = st.selectbox(t("5️⃣ What is your favorite school project type?"), [
-        t("Group work"), t("Solo research"), t("Art and design"), t("Presentation or speech"), t("Experiment or model")
-    ])
-    st.session_state.follow_ups['q6'] = st.selectbox(t("6️⃣ If you had to pick a club, which one would it be?"), [
-        t("Science Club"), t("Drama Club"), t("Coding Club"), t("Environment Club"), t("Debate Club")
-    ])
+# Combine input text
+combined_text = " ".join(inputs.values()).lower()
 
-if st.session_state.step == 0:
-    with st.form("basic_form"):
-        st.header(t("📝 Enter Student Information"))
-        st.session_state.user_data['career_like'] = st.text_area(t("Careers you like"), help=t("Eg. Doctor, Engineer, IAS, Designer"))
-        st.session_state.user_data['career_dislike'] = st.text_area(t("Careers you dislike"))
-        st.session_state.user_data['subject_like'] = st.text_area(t("Subjects you like"), help=t("Eg. Biology, History, Computer Science"))
-        st.session_state.user_data['subject_dislike'] = st.text_area(t("Subjects you dislike"))
-        st.session_state.user_data['hobbies'] = st.text_area(t("Hobbies and Achievements"), help=t("Eg. Drawing, Coding, Football, NCC, Reading"))
-        next_step = st.form_submit_button(t("Next"))
-        if next_step:
-            st.session_state.step = 1
+# Intelligent keyword match
+def match_domains(text):
+    scores = {domain: 0 for domain in career_domains}
+    for domain, keywords in domain_keywords.items():
+        for word in keywords:
+            if word in text:
+                scores[domain] += 1
+    return scores
 
-elif st.session_state.step == 1:
-    with st.form("extra_form"):
-        st.header(t("🔍 Let's get to know your interests better"))
-        st.session_state.user_data['q1'] = st.text_input(t("1️⃣ What kind of problems do you enjoy solving? (Eg. health, technology, environment, people)"))
-        st.session_state.user_data['q2'] = st.text_input(t("2️⃣ Which kind of work would you prefer — indoor desk job, field job, creative or leadership roles?"))
-        st.session_state.user_data['q3'] = st.text_input(t("3️⃣ Do you enjoy working with people, data, tools/machines, or ideas?"))
+# Interactive fallback questions
+def ask_additional_questions():
+    st.subheader("📋 Help us know more about you")
+    q1 = st.radio("Do you prefer working alone or in teams?", ["Alone", "Teams", "Both"])
+    q2 = st.radio("Do you enjoy physical, creative or analytical work?", ["Physical", "Creative", "Analytical"])
+    q3 = st.radio("Would you like to help people directly in your job?", ["Yes", "No", "Not sure"])
+    return f"{q1} {q2} {q3}"
 
-        submit_pre = st.form_submit_button(t("Next Step"))
-        if submit_pre:
-            all_likes_text = ' '.join([st.session_state.user_data[k] for k in ['career_like','subject_like','hobbies','q1','q2','q3']])
-            go_domains = interpret_sentences(all_likes_text)
-            if not go_domains:
-                st.session_state.step = 1.5
-            else:
-                st.session_state.final_go = list(go_domains)
-                all_dislikes_text = ' '.join([st.session_state.user_data['career_dislike'], st.session_state.user_data['subject_dislike']])
-                no_go_domains = interpret_sentences(all_dislikes_text)
-                st.session_state.final_no_go = [d for d in career_domains if d in no_go_domains and d not in go_domains]
-                st.session_state.suggestions = [k.title() for k, v in category_domain_map.items() if any(domain in go_domains for domain in v)]
-                st.session_state.step = 2
+# Show result after submit
+if st.button("Submit"):
+    if len(combined_text.strip()) < 15:
+        st.warning("Your answers were not detailed enough. Answer some more questions below:")
+        more_text = ask_additional_questions()
+        combined_text += " " + more_text.lower()
 
-elif st.session_state.step == 1.5:
-    st.markdown("### " + t("We need a bit more help to guide you better."))
-    with st.form("follow_up_form"):
-        ask_follow_up()
-        submit_all = st.form_submit_button(t("Show My Career Suggestions"))
-        if submit_all:
-            all_likes_text = ' '.join([
-                st.session_state.user_data[k] for k in ['career_like','subject_like','hobbies','q1','q2','q3']
-            ] + [
-                st.session_state.follow_ups['q4'],
-                st.session_state.follow_ups['q5'],
-                st.session_state.follow_ups['q6']
-            ])
-            all_dislikes_text = f"{st.session_state.user_data['career_dislike']} {st.session_state.user_data['subject_dislike']}"
+    matched_scores = match_domains(combined_text)
+    sorted_domains = sorted(matched_scores.items(), key=lambda x: x[1], reverse=True)
+    suitable = [domain for domain, score in sorted_domains if score > 0]
+    unsuitable = [domain for domain, score in sorted_domains if score == 0]
 
-            go_domains = interpret_sentences(all_likes_text)
-            no_go_domains = interpret_sentences(all_dislikes_text)
+    if suitable:
+        st.success("✅ Suitable Career Domains:")
+        for domain in suitable:
+            st.write(f"- {domain}")
+    else:
+        st.warning("⚠️ No strong career domains detected. Please try giving more specific examples.")
 
-            st.session_state.final_go = [d for d in career_domains if d in go_domains and d not in no_go_domains]
-            st.session_state.final_no_go = [d for d in career_domains if d in no_go_domains and d not in go_domains]
-            st.session_state.suggestions = [k.title() for k, v in category_domain_map.items() if any(domain in st.session_state.final_go for domain in v)]
+    if unsuitable:
+        st.info("🚫 Unsuitable Career Domains:")
+        for domain in unsuitable[:5]:
+            st.write(f"- {domain}")
 
-            st.session_state.step = 2
+    st.subheader("🎯 Ask follow-up questions about these careers:")
+    user_q = st.text_input("Type your career question (e.g., 'What does an IT engineer do?')")
+    if user_q:
+        found = False
+        for cat, qa in career_faq.items():
+            for pair in qa:
+                if any(keyword in user_q.lower() for keyword in pair["q"].lower().split()):
+                    st.write(f"💬 **{pair['a']}**")
+                    found = True
+                    break
+        if not found:
+            st.info("Sorry, I don't have an answer for that yet. Please ask another question.")
 
-elif st.session_state.step == 2:
-    st.subheader(t("📊 Career Analysis Result"))
-    st.markdown("### ✅ " + t("Suitable Career Domains") + ":")
-    st.write(st.session_state.final_go if st.session_state.final_go else t("Some more answers would help improve your result."))
-
-    st.markdown("### 🚫 " + t("Unsuitable Career Domains") + ":")
-    st.write(st.session_state.final_no_go if st.session_state.final_no_go else t("None detected."))
-
-    st.markdown("### 🎯 " + t("Suggested Careers") + ":")
-    st.write(st.session_state.suggestions[:10] if st.session_state.suggestions else t("More answers would help improve suggestions."))
-
-    if st.button(t("🔁 Start Over")):
-        st.session_state.step = 0
-        st.session_state.user_data = {}
-        st.session_state.final_go = []
-        st.session_state.final_no_go = []
-        st.session_state.suggestions = []
-        st.session_state.follow_ups = {}
+    if st.button("🔁 Restart"):
+        st.experimental_rerun()
