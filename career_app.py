@@ -3,7 +3,7 @@ import googletrans
 from googletrans import Translator
 
 # ------------------ Initial Setup ------------------ #
-st.set_page_config(page_title="Career Counsellor AI", layout="wide")
+st.set_page_config(page_title="Career Mitra AI", layout="wide")
 st.title("🎓 Career Counsellor AI (India Specific)")
 
 st.markdown("""
