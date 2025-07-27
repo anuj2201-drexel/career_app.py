@@ -1,5 +1,5 @@
 import streamlit as st
-from deep_translator import DeepL
+from deep_translator import GoogleTranslator
 
 # ------------------ Initial Setup ------------------ #
 st.set_page_config(page_title="Career Counsellor AI", layout="wide")
@@ -11,16 +11,16 @@ This tool analyses a student's career preferences, dislikes, subjects, and hobbi
 
 # ------------------ Language Selection ------------------ #
 languages = {
-    "English": "EN",
-    "Hindi": "HI",
-    "Marathi": "MR",
-    "Gujarati": "GU",
-    "Bengali": "BN",
-    "Tamil": "TA",
-    "Telugu": "TE",
-    "Kannada": "KN",
-    "Malayalam": "ML",
-    "Punjabi": "PA"
+    "English": "en",
+    "Hindi": "hi",
+    "Marathi": "mr",
+    "Gujarati": "gu",
+    "Bengali": "bn",
+    "Tamil": "ta",
+    "Telugu": "te",
+    "Kannada": "kn",
+    "Malayalam": "ml",
+    "Punjabi": "pa"
 }
 
 selected_lang = st.selectbox("Choose your language (अपनी भाषा चुनें)", list(languages.keys()))
@@ -29,7 +29,7 @@ language_code = languages[selected_lang]
 # Helper to translate prompts
 def t(text):
     try:
-        return DeepL(source='EN', target=language_code).translate(text)
+        return GoogleTranslator(source='auto', target=language_code).translate(text)
     except:
         return text
 
@@ -90,6 +90,7 @@ career_domains = [
 ]
 
 def extract_domains(text):
+    text = text.lower()
     domains = set()
     for keyword, domain_list in category_domain_map.items():
         if keyword in text:
@@ -132,7 +133,7 @@ elif st.session_state.step == 1:
 
         submit_pre = st.form_submit_button(t("Next Step"))
         if submit_pre:
-            all_likes_text = f"{st.session_state.user_data['career_like']} {st.session_state.user_data['subject_like']} {st.session_state.user_data['hobbies']} {st.session_state.user_data['q1']} {st.session_state.user_data['q2']} {st.session_state.user_data['q3']}".lower()
+            all_likes_text = f"{st.session_state.user_data['career_like']} {st.session_state.user_data['subject_like']} {st.session_state.user_data['hobbies']} {st.session_state.user_data['q1']} {st.session_state.user_data['q2']} {st.session_state.user_data['q3']}"
             go_domains = extract_domains(all_likes_text)
             if not go_domains:
                 st.session_state.step = 1.5
@@ -145,8 +146,8 @@ elif st.session_state.step == 1.5:
         ask_follow_up()
         submit_all = st.form_submit_button(t("Show My Career Suggestions"))
         if submit_all:
-            all_likes_text = f"{st.session_state.user_data['career_like']} {st.session_state.user_data['subject_like']} {st.session_state.user_data['hobbies']} {st.session_state.user_data['q1']} {st.session_state.user_data['q2']} {st.session_state.user_data['q3']} {st.session_state.follow_ups['q4']} {st.session_state.follow_ups['q5']} {st.session_state.follow_ups['q6']}".lower()
-            all_dislikes_text = f"{st.session_state.user_data['career_dislike']} {st.session_state.user_data['subject_dislike']}".lower()
+            all_likes_text = f"{st.session_state.user_data['career_like']} {st.session_state.user_data['subject_like']} {st.session_state.user_data['hobbies']} {st.session_state.user_data['q1']} {st.session_state.user_data['q2']} {st.session_state.user_data['q3']} {st.session_state.follow_ups['q4']} {st.session_state.follow_ups['q5']} {st.session_state.follow_ups['q6']}"
+            all_dislikes_text = f"{st.session_state.user_data['career_dislike']} {st.session_state.user_data['subject_dislike']}"
 
             go_domains = extract_domains(all_likes_text)
             no_go_domains = extract_domains(all_dislikes_text)
