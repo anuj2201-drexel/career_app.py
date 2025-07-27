@@ -97,6 +97,15 @@ def extract_domains(text):
             domains.update(domain_list)
     return domains
 
+# ------------------ Sentence-Level Matching ------------------ #
+def interpret_sentences(user_input):
+    input_text = user_input.lower()
+    matched = set()
+    for keyword in category_domain_map:
+        if keyword in input_text:
+            matched.update(category_domain_map[keyword])
+    return matched
+
 def ask_follow_up():
     st.session_state.follow_ups['q4'] = st.selectbox(t("4️⃣ Which of these activities do you enjoy most?"), [
         t("Helping people"),
@@ -133,11 +142,16 @@ elif st.session_state.step == 1:
 
         submit_pre = st.form_submit_button(t("Next Step"))
         if submit_pre:
-            all_likes_text = f"{st.session_state.user_data['career_like']} {st.session_state.user_data['subject_like']} {st.session_state.user_data['hobbies']} {st.session_state.user_data['q1']} {st.session_state.user_data['q2']} {st.session_state.user_data['q3']}"
-            go_domains = extract_domains(all_likes_text)
+            all_likes_text = ' '.join([st.session_state.user_data[k] for k in ['career_like','subject_like','hobbies','q1','q2','q3']])
+            go_domains = interpret_sentences(all_likes_text)
             if not go_domains:
                 st.session_state.step = 1.5
             else:
+                st.session_state.final_go = list(go_domains)
+                all_dislikes_text = ' '.join([st.session_state.user_data['career_dislike'], st.session_state.user_data['subject_dislike']])
+                no_go_domains = interpret_sentences(all_dislikes_text)
+                st.session_state.final_no_go = [d for d in career_domains if d in no_go_domains and d not in go_domains]
+                st.session_state.suggestions = [k.title() for k, v in category_domain_map.items() if any(domain in go_domains for domain in v)]
                 st.session_state.step = 2
 
 elif st.session_state.step == 1.5:
@@ -146,15 +160,20 @@ elif st.session_state.step == 1.5:
         ask_follow_up()
         submit_all = st.form_submit_button(t("Show My Career Suggestions"))
         if submit_all:
-            all_likes_text = f"{st.session_state.user_data['career_like']} {st.session_state.user_data['subject_like']} {st.session_state.user_data['hobbies']} {st.session_state.user_data['q1']} {st.session_state.user_data['q2']} {st.session_state.user_data['q3']} {st.session_state.follow_ups['q4']} {st.session_state.follow_ups['q5']} {st.session_state.follow_ups['q6']}"
+            all_likes_text = ' '.join([
+                st.session_state.user_data[k] for k in ['career_like','subject_like','hobbies','q1','q2','q3']
+            ] + [
+                st.session_state.follow_ups['q4'],
+                st.session_state.follow_ups['q5'],
+                st.session_state.follow_ups['q6']
+            ])
             all_dislikes_text = f"{st.session_state.user_data['career_dislike']} {st.session_state.user_data['subject_dislike']}"
 
-            go_domains = extract_domains(all_likes_text)
-            no_go_domains = extract_domains(all_dislikes_text)
+            go_domains = interpret_sentences(all_likes_text)
+            no_go_domains = interpret_sentences(all_dislikes_text)
 
             st.session_state.final_go = [d for d in career_domains if d in go_domains and d not in no_go_domains]
             st.session_state.final_no_go = [d for d in career_domains if d in no_go_domains and d not in go_domains]
-
             st.session_state.suggestions = [k.title() for k, v in category_domain_map.items() if any(domain in st.session_state.final_go for domain in v)]
 
             st.session_state.step = 2
