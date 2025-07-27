@@ -2,7 +2,7 @@ import streamlit as st
 
 # ------------------ Initial Setup ------------------ #
 st.set_page_config(page_title="Career Counsellor AI", layout="wide")
-st.title("🎓 Career Counsellor AI (India Specific)")
+st.title("🎓 Career Counsellor Anuj AI (India Specific)")
 
 st.markdown("""
 This tool analyses a student's career preferences, dislikes, subjects, and hobbies to recommend suitable career domains and job roles. Built for Indian students across streams (Science, Commerce, Humanities).
@@ -40,6 +40,7 @@ category_domain_map = {
     "chemistry": ["Physical Science"],
     "environment": ["Environmental & Biological Science"],
     "media": ["Arts, Design, Media & Communication"]
+    # Add more keywords as needed
 }
 
 career_domains = [
@@ -51,24 +52,36 @@ career_domains = [
     "Personal Care & Service", "Law Enforcement & Protective Service"
 ]
 
+# ------------------ Helper Function ------------------ #
+def extract_domains(text):
+    domains = set()
+    for keyword, domain_list in category_domain_map.items():
+        if keyword in text:
+            domains.update(domain_list)
+    return domains
+
+# ------------------ Analysis ------------------ #
 if submitted:
     st.subheader("📊 Career Analysis Result")
 
-    # Combine and lowercase all inputs
     all_likes_text = f"{career_like} {subject_like} {hobbies}".lower()
     all_dislikes_text = f"{career_dislike} {subject_dislike}".lower()
 
-    go_domains = set()
-    no_go_domains = set()
-
-    for keyword, domains in category_domain_map.items():
-        if keyword in all_likes_text:
-            go_domains.update(domains)
-        if keyword in all_dislikes_text:
-            no_go_domains.update(domains)
+    go_domains = extract_domains(all_likes_text)
+    no_go_domains = extract_domains(all_dislikes_text)
 
     final_go = [d for d in career_domains if d in go_domains and d not in no_go_domains]
     final_no_go = [d for d in career_domains if d in no_go_domains and d not in go_domains]
+
+    # If insufficient data, ask additional questions
+    if not final_go:
+        st.warning("We need a bit more information to guide you better. Please answer the following:")
+        q1 = st.text_input("1️⃣ What kind of problems do you enjoy solving? (Eg. health, technology, environment, people)")
+        q2 = st.text_input("2️⃣ Which kind of work would you prefer — indoor desk job, field job, creative or leadership roles?")
+        q3 = st.text_input("3️⃣ Do you enjoy working with people, data, tools/machines, or ideas?")
+        extra_input = f"{q1} {q2} {q3}".lower()
+        go_domains.update(extract_domains(extra_input))
+        final_go = [d for d in career_domains if d in go_domains and d not in no_go_domains]
 
     st.markdown("### ✅ Suitable Career Domains:")
     st.write(final_go if final_go else "No clear domains identified from the inputs.")
