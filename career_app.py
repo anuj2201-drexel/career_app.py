@@ -23,9 +23,6 @@ languages = {
     "Punjabi": "pa"
 }
 
-translator = Translator()
-selected_lang = st.selectbox("Choose your language (अपनी भाषा चुनें)", list(languages.keys()))
-language_code = languages[selected_lang]
 
 # Helper to translate prompts
 
