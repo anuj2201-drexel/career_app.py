@@ -10,6 +10,7 @@ This tool analyses a student's career preferences, dislikes, subjects, and hobbi
 """)
 
 # ------------------ Language Selection ------------------ #
+# ------------------ Language Selection ------------------ #
 languages = {
     "English": "en",
     "Hindi": "hi",
@@ -22,6 +23,14 @@ languages = {
     "Malayalam": "ml",
     "Punjabi": "pa"
 }
+
+# Default language code (English)
+if 'language_code' not in st.session_state:
+    st.session_state.language_code = 'en'
+
+selected_language = st.selectbox("🌐 Select your preferred language", list(languages.keys()), index=list(languages.keys()).index("English"))
+st.session_state.language_code = languages[selected_language]
+language_code = st.session_state.language_code
 
 
 # Helper to translate prompts
