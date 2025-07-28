@@ -1,120 +1,73 @@
-
 import streamlit as st
-from deep_translator import GoogleTranslator
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import json
+import os
 
-# Load pre-written FAQ if needed
-with open("career_faq.json", "r", encoding="utf-8") as f:
-    career_faq = json.load(f)
-
-st.set_page_config(page_title="Career Discovery App", layout="wide")
-st.title("🎓 Career Discovery Companion")
-st.markdown("This AI-driven tool helps you find the best career options based on your interests, hobbies, and achievements.")
-
-# Language support
-languages = {
-    "English": "en", "Hindi": "hi", "Marathi": "mr", "Gujarati": "gu",
-    "Tamil": "ta", "Telugu": "te", "Kannada": "kn", "Bengali": "bn",
-    "Punjabi": "pa", "Malayalam": "ml"
-}
-selected_language = st.selectbox("Select your language", list(languages.keys()))
-lang_code = languages[selected_language]
-
-def translate_text(text, target_lang):
-    try:
-        return GoogleTranslator(source='auto', target=target_lang).translate(text)
-    except:
-        return text
-
-# Career domains
-career_domains = [
-    "Medicine & Healthcare", "Engineering & Technology", "Installation, Maintenance & Repair",
-    "Information Technology", "Environmental & Biological Science", "Physical Science",
-    "Transportation & Material Moving", "Business, Accounts & Finance", "Management", "Sales",
-    "Arts, Design, Media & Communication", "Education, Training & Library", "Community & Social Service",
-    "Social Science", "Office Support & Administration", "Personal Care & Service",
-    "Law Enforcement & Protective Service"
-]
-
-# NLP Keyword dictionary per domain
-domain_keywords = {
-    "Information Technology": ["coding", "programming", "software", "developer", "AI", "data", "computers"],
-    "Medicine & Healthcare": ["doctor", "nurse", "medicine", "surgery", "hospital", "patient", "health"],
-    "Engineering & Technology": ["machines", "engineering", "mechanical", "civil", "electrical", "robotics"],
-    "Business, Accounts & Finance": ["money", "finance", "bank", "investment", "CA", "accountant", "stocks"],
-    "Arts, Design, Media & Communication": ["drawing", "painting", "acting", "writing", "media", "film", "design"],
-    "Education, Training & Library": ["teaching", "training", "education", "library", "students", "coach"],
-    "Social Science": ["psychology", "history", "geography", "politics", "economics"],
-    "Law Enforcement & Protective Service": ["police", "law", "army", "defence", "security"],
-    "Personal Care & Service": ["beautician", "hair", "salon", "spa", "styling", "cooking"],
+# Sample data for career domains
+career_domains = {
+    "Arts": ["drawing", "painting", "storytelling", "graphic novels", "design", "music"],
+    "Healthcare": ["helping people", "hospital", "nursing", "medicine", "care"],
+    "STEM": ["science", "technology", "math", "engineering", "coding", "experiments"],
+    "Social Work": ["volunteering", "helping", "community", "ngo", "stray animals"],
+    "Business": ["entrepreneur", "sales", "marketing", "management", "money"],
+    "Education": ["teaching", "learning", "school", "tutoring"]
 }
 
-# Collect inputs
-inputs = {}
-inputs["career_like"] = st.text_area(translate_text("Which careers do you like?", lang_code))
-inputs["career_dislike"] = st.text_area(translate_text("Which careers do you dislike?", lang_code))
-inputs["subjects_like"] = st.text_area(translate_text("Which subjects do you enjoy in school?", lang_code))
-inputs["subjects_dislike"] = st.text_area(translate_text("Which subjects do you dislike?", lang_code))
-inputs["hobbies"] = st.text_area(translate_text("List your hobbies and any personal achievements", lang_code))
+def get_relevant_domains(text):
+    text = text.lower()
+    domain_scores = {}
+    for domain, keywords in career_domains.items():
+        matches = sum([1 for kw in keywords if kw in text])
+        domain_scores[domain] = matches
+    sorted_domains = sorted(domain_scores.items(), key=lambda x: x[1], reverse=True)
+    relevant = [d for d, score in sorted_domains if score > 0]
+    return relevant, sorted_domains
 
-# Combine input text
-combined_text = " ".join(inputs.values()).lower()
+# App layout
+st.set_page_config(page_title="Career Suggestion App", layout="centered")
+st.title("🔍 Career Discovery App for Students")
 
-# Intelligent keyword match
-def match_domains(text):
-    scores = {domain: 0 for domain in career_domains}
-    for domain, keywords in domain_keywords.items():
-        for word in keywords:
-            if word in text:
-                scores[domain] += 1
-    return scores
+# Language selection (simplified UI only)
+language = st.selectbox("Select Language", ["English", "Hindi", "Marathi", "Tamil", "Telugu", "Gujarati", "Bengali", "Kannada", "Malayalam", "Punjabi"])
 
-# Interactive fallback questions
-def ask_additional_questions():
-    st.subheader("📋 Help us know more about you")
-    q1 = st.radio("Do you prefer working alone or in teams?", ["Alone", "Teams", "Both"])
-    q2 = st.radio("Do you enjoy physical, creative or analytical work?", ["Physical", "Creative", "Analytical"])
-    q3 = st.radio("Would you like to help people directly in your job?", ["Yes", "No", "Not sure"])
-    return f"{q1} {q2} {q3}"
+st.markdown("Please answer the following questions in simple sentences:")
 
-# Show result after submit
-if st.button("Submit"):
-    if len(combined_text.strip()) < 15:
-        st.warning("Your answers were not detailed enough. Answer some more questions below:")
-        more_text = ask_additional_questions()
-        combined_text += " " + more_text.lower()
+interests = st.text_area("1. What are your interests?")
+dislikes = st.text_area("2. What are your dislikes or things you don’t enjoy?")
+achievements = st.text_area("3. What are your achievements?")
+hobbies = st.text_area("4. What are your hobbies?")
+confused_about = st.text_area("5. What are you confused about or unsure in choosing?")
 
-    matched_scores = match_domains(combined_text)
-    sorted_domains = sorted(matched_scores.items(), key=lambda x: x[1], reverse=True)
-    suitable = [domain for domain, score in sorted_domains if score > 0]
-    unsuitable = [domain for domain, score in sorted_domains if score == 0]
+if st.button("🔍 Find Career Suggestions"):
+    full_text = f"{interests}\n{dislikes}\n{achievements}\n{hobbies}\n{confused_about}"
+    relevant, domain_scores = get_relevant_domains(full_text)
 
-    if suitable:
-        st.success("✅ Suitable Career Domains:")
-        for domain in suitable:
-            st.write(f"- {domain}")
+    # Handle inconclusive data
+    if not relevant:
+        st.warning("We need a bit more information. Please answer these follow-up questions:")
+        follow_up_1 = st.text_input("What school subjects do you enjoy or hate?")
+        follow_up_2 = st.text_input("Have you ever imagined your future self doing something?")
+        follow_up_3 = st.text_input("What makes you feel proud or excited?")
+
+        full_text += f"\n{follow_up_1}\n{follow_up_2}\n{follow_up_3}"
+        relevant, domain_scores = get_relevant_domains(full_text)
+
+    # Paraphrased Summary
+    if any([interests, dislikes, achievements, hobbies, confused_about]):
+        summary = f"You mentioned that you're interested in {interests.strip().lower() or 'various topics'}, but not very fond of {dislikes.strip().lower() or 'certain things'}. You have achieved {achievements.strip().lower() or 'some notable things'}, and enjoy spending time on hobbies like {hobbies.strip().lower() or 'different activities'}. You're feeling unsure about {confused_about.strip().lower() or 'a clear path ahead'}."
+        st.markdown("### 📌 Summary of What You Shared")
+        st.info(summary)
+
+    st.markdown("### ✅ Suggested Career Domains:")
+    if relevant:
+        for domain in relevant[:3]:
+            st.success(f"- {domain}")
     else:
-        st.warning("⚠️ No strong career domains detected. Please try giving more specific examples.")
+        st.error("Still not enough information to determine suitable careers. Please try again.")
 
-    if unsuitable:
-        st.info("🚫 Unsuitable Career Domains:")
-        for domain in unsuitable[:5]:
-            st.write(f"- {domain}")
-
-    st.subheader("🎯 Ask follow-up questions about these careers:")
-    user_q = st.text_input("Type your career question (e.g., 'What does an IT engineer do?')")
-    if user_q:
-        found = False
-        for cat, qa in career_faq.items():
-            for pair in qa:
-                if any(keyword in user_q.lower() for keyword in pair["q"].lower().split()):
-                    st.write(f"💬 **{pair['a']}**")
-                    found = True
-                    break
-        if not found:
-            st.info("Sorry, I don't have an answer for that yet. Please ask another question.")
-
-    if st.button("🔁 Restart"):
-        st.experimental_rerun()
+    st.markdown("### 💬 Have questions about these careers?")
+    query = st.text_input("Type your question here:")
+    if query:
+        st.markdown(f"(Simulated) You asked: **{query}**")
+        st.markdown("This is where an intelligent response would appear. 🤖")
