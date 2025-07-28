@@ -1,5 +1,5 @@
 import streamlit as st
-from textblob import TextBlob
+from spellchecker import SpellChecker
 import json
 import os
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -35,33 +35,55 @@ student_inputs = {
     "confusions": st.text_area("5️⃣ Are you confused about anything? Tell us (optional):")
 }
 
-def correct_text(text):
-    try:
-        return str(TextBlob(text).correct())
-    except Exception:
-        return text
+# Spell correction and abbreviation handling
+spell = SpellChecker()
+term_expansions = {
+    "bio": "biology",
+    "eco": "economics",
+    "comp": "computer science",
+    "maths": "mathematics",
+    "gymn": "gym",
+    "cs": "computer science",
+    "acc": "accounting",
+    "hist": "history",
+    "geo": "geography",
+    "sci": "science",
+    "biz": "business",
+    "eng": "english"
+}
+
+def clean_and_expand_text(text):
+    if not text.strip():
+        return ""
+    words = text.lower().split()
+    corrected = []
+    for word in words:
+        if word in term_expansions:
+            corrected.append(term_expansions[word])
+        else:
+            corrected_word = spell.correction(word)
+            corrected.append(corrected_word if corrected_word else word)
+    return " ".join(corrected)
 
 if st.button("🔎 Analyze My Career Fit"):
     with st.spinner("Analyzing your responses and preparing your career summary..."):
 
         # Combine and correct all student text
-        combined_inputs = " ".join(student_inputs.values())
-
-        corrected_inputs = {k: correct_text(v) for k, v in student_inputs.items() if v.strip() != ""}
+        corrected_inputs = {k: clean_and_expand_text(v) for k, v in student_inputs.items() if v.strip() != ""}
         combined_corrected = " ".join(corrected_inputs.values())
 
         # Summary construction
         summary_parts = []
         if corrected_inputs.get("interests"):
-            summary_parts.append(f"You mentioned being interested in {corrected_inputs['interests'].lower()}.")
+            summary_parts.append(f"You mentioned being interested in {corrected_inputs['interests']}.")
         if corrected_inputs.get("dislikes"):
-            summary_parts.append(f"You don’t enjoy {corrected_inputs['dislikes'].lower()}.")
+            summary_parts.append(f"You don’t enjoy {corrected_inputs['dislikes']}.")
         if corrected_inputs.get("strengths"):
-            summary_parts.append(f"You believe your strengths are {corrected_inputs['strengths'].lower()}.")
+            summary_parts.append(f"You believe your strengths are {corrected_inputs['strengths']}.")
         if corrected_inputs.get("achievements"):
-            summary_parts.append(f"You’re proud of accomplishments like {corrected_inputs['achievements'].lower()}.")
+            summary_parts.append(f"You’re proud of accomplishments like {corrected_inputs['achievements']}.")
         if corrected_inputs.get("confusions"):
-            summary_parts.append(f"You’re confused about {corrected_inputs['confusions'].lower()}.")
+            summary_parts.append(f"You’re confused about {corrected_inputs['confusions']}.")
 
         final_summary = " ".join(summary_parts)
 
