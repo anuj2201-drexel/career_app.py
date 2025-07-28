@@ -1,0 +1,58 @@
+{
+  "career_1": {
+    "title": "Data Analyst",
+    "description": "Interpret data and turn it into information that can offer ways to improve a business.",
+    "skills": [
+      "Data analysis",
+      "SQL",
+      "Excel",
+      "Visualization"
+    ],
+    "education": "Bachelor's in Statistics, Economics, or related field",
+    "onet_link": "https://www.onetonline.org/link/summary/15-2051.00"
+  },
+  "career_2": {
+    "title": "Graphic Designer",
+    "description": "Create visual concepts to communicate ideas that inspire, inform, and captivate consumers.",
+    "skills": [
+      "Adobe Photoshop",
+      "Illustrator",
+      "Creativity"
+    ],
+    "education": "Bachelor's in Design or Fine Arts",
+    "onet_link": "https://www.onetonline.org/link/summary/27-1024.00"
+  },
+  "career_3": {
+    "title": "Physiotherapist",
+    "description": "Help people affected by injury, illness or disability through movement and exercise.",
+    "skills": [
+      "Anatomy knowledge",
+      "Rehabilitation",
+      "Communication"
+    ],
+    "education": "Bachelor's/Master\u2019s in Physiotherapy",
+    "onet_link": "https://www.onetonline.org/link/summary/29-1123.00"
+  },
+  "career_4": {
+    "title": "Teacher (Secondary School)",
+    "description": "Teach students in one or more subjects in public or private schools at the secondary level.",
+    "skills": [
+      "Subject expertise",
+      "Classroom management",
+      "Communication"
+    ],
+    "education": "Bachelor's in Education + Subject Specialization",
+    "onet_link": "https://www.onetonline.org/link/summary/25-2031.00"
+  },
+  "career_5": {
+    "title": "Marketing Manager",
+    "description": "Plan, direct, or coordinate marketing policies and programs.",
+    "skills": [
+      "Market research",
+      "Strategy",
+      "Leadership"
+    ],
+    "education": "Bachelor\u2019s/MBA in Marketing or Business",
+    "onet_link": "https://www.onetonline.org/link/summary/11-2021.00"
+  }
+}
