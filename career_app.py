@@ -1,73 +1,102 @@
 import streamlit as st
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from textblob import TextBlob
 import json
 import os
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Sample data for career domains
-career_domains = {
-    "Arts": ["drawing", "painting", "storytelling", "graphic novels", "design", "music"],
-    "Healthcare": ["helping people", "hospital", "nursing", "medicine", "care"],
-    "STEM": ["science", "technology", "math", "engineering", "coding", "experiments"],
-    "Social Work": ["volunteering", "helping", "community", "ngo", "stray animals"],
-    "Business": ["entrepreneur", "sales", "marketing", "management", "money"],
-    "Education": ["teaching", "learning", "school", "tutoring"]
+st.set_page_config(page_title="Career Suggestion App", layout="wide")
+st.title("🔍 Career Suggestion App for Students (with Smart Summary)")
+
+# Load FAQ or career mapping data
+if not os.path.exists("career_faq.json"):
+    st.error("Missing career_faq.json file. Please upload it.")
+    st.stop()
+
+with open("career_faq.json", "r", encoding="utf-8") as f:
+    faq_data = json.load(f)
+
+# Extract career domains and sample keywords
+career_domains = list(faq_data.keys())
+domain_keywords = [" ".join(faq_data[domain]) for domain in career_domains]
+
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(domain_keywords)
+
+st.markdown("---")
+st.markdown("### 🧠 Tell us more about you")
+
+# Input fields
+student_inputs = {
+    "interests": st.text_area("1️⃣ What are your interests or hobbies?"),
+    "dislikes": st.text_area("2️⃣ What subjects or activities do you NOT like?"),
+    "strengths": st.text_area("3️⃣ What do you think you're good at (skills, subjects, etc.)?"),
+    "achievements": st.text_area("4️⃣ Share any achievements or proud moments (optional):"),
+    "confusions": st.text_area("5️⃣ Are you confused about anything? Tell us (optional):")
 }
 
-def get_relevant_domains(text):
-    text = text.lower()
-    domain_scores = {}
-    for domain, keywords in career_domains.items():
-        matches = sum([1 for kw in keywords if kw in text])
-        domain_scores[domain] = matches
-    sorted_domains = sorted(domain_scores.items(), key=lambda x: x[1], reverse=True)
-    relevant = [d for d, score in sorted_domains if score > 0]
-    return relevant, sorted_domains
+if st.button("🔎 Analyze My Career Fit"):
+    with st.spinner("Analyzing your responses and preparing your career summary..."):
 
-# App layout
-st.set_page_config(page_title="Career Suggestion App", layout="centered")
-st.title("🔍 Career Discovery App for Students")
+        # Combine and correct all student text
+        combined_inputs = " ".join(student_inputs.values())
 
-# Language selection (simplified UI only)
-language = st.selectbox("Select Language", ["English", "Hindi", "Marathi", "Tamil", "Telugu", "Gujarati", "Bengali", "Kannada", "Malayalam", "Punjabi"])
+        def correct_text(text):
+            return str(TextBlob(text).correct())
 
-st.markdown("Please answer the following questions in simple sentences:")
+        corrected_inputs = {k: correct_text(v) for k, v in student_inputs.items() if v.strip() != ""}
+        combined_corrected = " ".join(corrected_inputs.values())
 
-interests = st.text_area("1. What are your interests?")
-dislikes = st.text_area("2. What are your dislikes or things you don’t enjoy?")
-achievements = st.text_area("3. What are your achievements?")
-hobbies = st.text_area("4. What are your hobbies?")
-confused_about = st.text_area("5. What are you confused about or unsure in choosing?")
+        # Summary construction
+        summary_parts = []
+        if corrected_inputs.get("interests"):
+            summary_parts.append(f"You mentioned being interested in {corrected_inputs['interests'].lower()}.")
+        if corrected_inputs.get("dislikes"):
+            summary_parts.append(f"You don’t enjoy {corrected_inputs['dislikes'].lower()}.")
+        if corrected_inputs.get("strengths"):
+            summary_parts.append(f"You believe your strengths are {corrected_inputs['strengths'].lower()}.")
+        if corrected_inputs.get("achievements"):
+            summary_parts.append(f"You’re proud of accomplishments like {corrected_inputs['achievements'].lower()}.")
+        if corrected_inputs.get("confusions"):
+            summary_parts.append(f"You’re confused about {corrected_inputs['confusions'].lower()}.")
 
-if st.button("🔍 Find Career Suggestions"):
-    full_text = f"{interests}\n{dislikes}\n{achievements}\n{hobbies}\n{confused_about}"
-    relevant, domain_scores = get_relevant_domains(full_text)
+        final_summary = " ".join(summary_parts)
 
-    # Handle inconclusive data
-    if not relevant:
-        st.warning("We need a bit more information. Please answer these follow-up questions:")
-        follow_up_1 = st.text_input("What school subjects do you enjoy or hate?")
-        follow_up_2 = st.text_input("Have you ever imagined your future self doing something?")
-        follow_up_3 = st.text_input("What makes you feel proud or excited?")
+        # NLP match
+        query_vec = vectorizer.transform([combined_corrected])
+        similarity = cosine_similarity(query_vec, X)[0]
 
-        full_text += f"\n{follow_up_1}\n{follow_up_2}\n{follow_up_3}"
-        relevant, domain_scores = get_relevant_domains(full_text)
+        ranked_indices = similarity.argsort()[::-1]
+        top_matches = [(career_domains[i], similarity[i]) for i in ranked_indices if similarity[i] > 0.2]
 
-    # Paraphrased Summary
-    if any([interests, dislikes, achievements, hobbies, confused_about]):
-        summary = f"You mentioned that you're interested in {interests.strip().lower() or 'various topics'}, but not very fond of {dislikes.strip().lower() or 'certain things'}. You have achieved {achievements.strip().lower() or 'some notable things'}, and enjoy spending time on hobbies like {hobbies.strip().lower() or 'different activities'}. You're feeling unsure about {confused_about.strip().lower() or 'a clear path ahead'}."
-        st.markdown("### 📌 Summary of What You Shared")
-        st.info(summary)
+        unsuitable_matches = [(career_domains[i], similarity[i]) for i in ranked_indices if similarity[i] < 0.05]
 
-    st.markdown("### ✅ Suggested Career Domains:")
-    if relevant:
-        for domain in relevant[:3]:
-            st.success(f"- {domain}")
-    else:
-        st.error("Still not enough information to determine suitable careers. Please try again.")
+        st.subheader("📝 Your Profile Summary:")
+        st.info(final_summary if final_summary else "We couldn’t summarize due to missing input.")
 
-    st.markdown("### 💬 Have questions about these careers?")
-    query = st.text_input("Type your question here:")
-    if query:
-        st.markdown(f"(Simulated) You asked: **{query}**")
-        st.markdown("This is where an intelligent response would appear. 🤖")
+        st.markdown("---")
+        st.subheader("🎯 Career Suggestions")
+
+        if top_matches:
+            st.success("✅ **Suitable Career Domains:**")
+            for domain, score in top_matches:
+                st.write(f"- {domain} ({round(score*100, 1)}%)")
+        else:
+            st.warning("No strong matches found. Try entering more detailed responses.")
+
+        if unsuitable_matches:
+            st.error("🚫 **Less Suitable Domains (based on your dislikes or weaknesses):**")
+            for domain, score in unsuitable_matches[:3]:
+                st.write(f"- {domain}")
+
+        # Chat-style question box
+        st.markdown("---")
+        st.subheader("💬 Ask a follow-up question")
+        chat_q = st.text_input("Want to know more about one of the careers suggested?")
+        if chat_q:
+            st.info("This version is offline. Detailed answers will be part of next update with AI support.")
+
+        # Reset option
+        st.markdown("---")
+        if st.button("🔁 Start Over"):
+            st.experimental_rerun()
