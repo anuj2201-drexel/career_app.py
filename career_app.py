@@ -35,14 +35,17 @@ student_inputs = {
     "confusions": st.text_area("5️⃣ Are you confused about anything? Tell us (optional):")
 }
 
+def correct_text(text):
+    try:
+        return str(TextBlob(text).correct())
+    except Exception:
+        return text
+
 if st.button("🔎 Analyze My Career Fit"):
     with st.spinner("Analyzing your responses and preparing your career summary..."):
 
         # Combine and correct all student text
         combined_inputs = " ".join(student_inputs.values())
-
-        def correct_text(text):
-            return str(TextBlob(text).correct())
 
         corrected_inputs = {k: correct_text(v) for k, v in student_inputs.items() if v.strip() != ""}
         combined_corrected = " ".join(corrected_inputs.values())
@@ -67,7 +70,7 @@ if st.button("🔎 Analyze My Career Fit"):
         similarity = cosine_similarity(query_vec, X)[0]
 
         ranked_indices = similarity.argsort()[::-1]
-        top_matches = [(career_domains[i], similarity[i]) for i in ranked_indices if similarity[i] > 0.2]
+        top_matches = [(career_domains[i], similarity[i]) for i in ranked_indices if similarity[i] > 0.2 and career_domains[i].lower() not in ["people", "things"]]
 
         unsuitable_matches = [(career_domains[i], similarity[i]) for i in ranked_indices if similarity[i] < 0.05]
 
