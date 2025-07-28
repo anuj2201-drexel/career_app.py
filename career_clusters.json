@@ -1,0 +1,70 @@
+{
+  "STEM (Science, Technology, Engineering & Math)": {
+    "keywords": ["science", "technology", "engineering", "math", "physics", "chemistry", "robotics", "ai", "machine learning", "statistics", "data", "computer", "coding"],
+    "careers": ["Software Developer", "Data Scientist", "Mechanical Engineer", "Statistician", "AI Researcher"]
+  },
+  "Health Science": {
+    "keywords": ["health", "biology", "medicine", "hospital", "surgery", "anatomy", "nurse", "doctor", "therapy", "pathology", "diagnostic"],
+    "careers": ["Doctor", "Nurse", "Pharmacist", "Physiotherapist", "Medical Lab Technician"]
+  },
+  "Business Management & Administration": {
+    "keywords": ["business", "management", "entrepreneurship", "startup", "leadership", "operations", "mba", "strategy"],
+    "careers": ["Business Analyst", "Operations Manager", "Entrepreneur", "Project Manager", "Management Consultant"]
+  },
+  "Finance": {
+    "keywords": ["finance", "accounting", "banking", "investment", "stock", "economics", "money", "tax", "auditing"],
+    "careers": ["Accountant", "Investment Banker", "Financial Analyst", "Auditor", "Tax Consultant"]
+  },
+  "Information Technology": {
+    "keywords": ["it", "software", "hardware", "programming", "cloud", "network", "cybersecurity", "web", "tech", "systems"],
+    "careers": ["Network Engineer", "Cybersecurity Specialist", "Web Developer", "Cloud Architect", "System Administrator"]
+  },
+  "Education & Training": {
+    "keywords": ["teaching", "education", "training", "learning", "tutoring", "mentor", "instructor", "classroom"],
+    "careers": ["School Teacher", "Corporate Trainer", "Curriculum Designer", "Education Consultant", "Professor"]
+  },
+  "Arts, A/V Technology & Communications": {
+    "keywords": ["media", "design", "art", "music", "film", "video", "photography", "animation", "graphic", "writing"],
+    "careers": ["Graphic Designer", "Animator", "Filmmaker", "Journalist", "Content Writer"]
+  },
+  "Law, Public Safety, Corrections & Security": {
+    "keywords": ["law", "justice", "security", "police", "legal", "crime", "court", "advocate", "fire", "investigation"],
+    "careers": ["Lawyer", "Police Officer", "Firefighter", "Paralegal", "Forensic Analyst"]
+  },
+  "Hospitality & Tourism": {
+    "keywords": ["hospitality", "hotel", "tourism", "travel", "event", "restaurant", "chef", "guide", "resort", "catering"],
+    "careers": ["Hotel Manager", "Chef", "Event Planner", "Tour Guide", "Travel Agent"]
+  },
+  "Marketing": {
+    "keywords": ["marketing", "advertising", "branding", "sales", "digital", "seo", "social media", "promotion", "market"],
+    "careers": ["Digital Marketer", "Brand Manager", "SEO Specialist", "Sales Executive", "Market Research Analyst"]
+  },
+  "Government & Public Administration": {
+    "keywords": ["government", "civics", "politics", "public", "policy", "administration", "ngo", "services", "regulations"],
+    "careers": ["IAS Officer", "Policy Analyst", "Public Administrator", "NGO Manager", "Diplomat"]
+  },
+  "Architecture & Construction": {
+    "keywords": ["architecture", "construction", "design", "building", "interior", "civil", "urban", "site", "structure"],
+    "careers": ["Architect", "Civil Engineer", "Urban Planner", "Interior Designer", "Construction Manager"]
+  },
+  "Agriculture, Food & Natural Resources": {
+    "keywords": ["agriculture", "farming", "food", "environment", "natural", "horticulture", "animal", "soil", "ecology"],
+    "careers": ["Agronomist", "Food Technologist", "Veterinarian", "Horticulturist", "Environmental Scientist"]
+  },
+  "Human Services": {
+    "keywords": ["social", "counseling", "mental", "community", "support", "rehab", "psychology", "therapy", "family"],
+    "careers": ["Psychologist", "Social Worker", "Therapist", "Rehabilitation Specialist", "Career Counselor"]
+  },
+  "Transportation, Distribution & Logistics": {
+    "keywords": ["transport", "logistics", "shipping", "supply chain", "distribution", "automobile", "aviation", "warehouse"],
+    "careers": ["Logistics Manager", "Supply Chain Analyst", "Pilot", "Driver", "Transportation Planner"]
+  },
+  "Manufacturing": {
+    "keywords": ["manufacturing", "factory", "production", "machinery", "assembly", "automation", "industrial", "plant"],
+    "careers": ["Production Engineer", "Factory Supervisor", "Quality Control Analyst", "Industrial Designer"]
+  },
+  "Energy": {
+    "keywords": ["energy", "renewable", "solar", "wind", "oil", "gas", "power", "nuclear", "sustainable"],
+    "careers": ["Renewable Energy Engineer", "Energy Analyst", "Power Plant Operator", "Environmental Engineer"]
+  }
+}
